@@ -4,3 +4,5 @@
 25/11/205:
     1. Leetcode - 162: Find Peak Element - Binary Search - Medium
     2. Leetcode - 744: Find Smallest character greater than target - Easy
+26/11/2025:
+     
