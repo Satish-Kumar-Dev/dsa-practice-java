@@ -5,4 +5,6 @@
     1. Leetcode - 162: Find Peak Element - Binary Search - Medium
     2. Leetcode - 744: Find Smallest character greater than target - Easy
 26/11/2025:
+    1. Leetcode - 34: Find first and last position of a element in a sorted array - Medium
+    2. Geeks for Geeks: Find position of an element in a sorted array of infinite numbers - Medium
      
