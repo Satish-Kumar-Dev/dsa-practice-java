@@ -7,4 +7,8 @@
 26/11/2025:
     1. Leetcode - 34: Find first and last position of a element in a sorted array - Medium
     2. Geeks for Geeks: Find position of an element in a sorted array of infinite numbers - Medium
+27/11/2025:
+    1. Leetcode - 852: Peak index in a Mountain array - Medium
+    2. Leetcode - 1095: Find in Mountain Array - Hard
+
      
