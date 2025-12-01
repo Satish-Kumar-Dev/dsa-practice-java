@@ -17,5 +17,8 @@ Week - 01:
     29/11/2025:
         1: General Question : Rotation Count of a rotated sorted array - Medium
         2: Leetcode - 410: Split Array Largest Sum - Hard
-
+Week - 02:
+    01/12/2025:
+        1: Leetcode - 287: Find the Duplicate Number - Medium
+        2: Leetcode - 1011: Capacity to Ship Packages in D days - Medium
      
