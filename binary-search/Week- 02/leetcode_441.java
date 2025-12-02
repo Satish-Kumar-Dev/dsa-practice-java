@@ -15,7 +15,7 @@ class Solution {
              * That we can get to create for the given condition
              */
             long max = (long)((mid * (mid+1))/2);
-            if(limit == mid) return mid;
+            if(limit == max) return mid;
             else if(max < limit) start = mid+1;
             else end = mid-1;
         }
