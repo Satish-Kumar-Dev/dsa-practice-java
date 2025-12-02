@@ -15,10 +15,13 @@ Week - 01:
         1: Leetcode - 33: Search in a Rotated sorted array - Medium
         2: Leetcode - 81: Search in a Rotated sorted array II - Medium
     29/11/2025:
-        1: General Question : Rotation Count of a rotated sorted array - Medium
+        1: Search In a InfiniteSortedArray : Rotation Count of a rotated sorted array - Medium
         2: Leetcode - 410: Split Array Largest Sum - Hard
 Week - 02:
     01/12/2025:
         1: Leetcode - 287: Find the Duplicate Number - Medium
         2: Leetcode - 1011: Capacity to Ship Packages in D days - Medium
+    02/12/2025:
+        1: Book Allocation - Medium
+        2: Leetcode - 441: Arranging coins - Easy
      
