@@ -24,7 +24,8 @@ Week - 02:
     02/12/2025:
         1: Book Allocation - Medium
         2: Leetcode - 441: Arranging coins - Easy
-    01/12/2025:
+    03/12/2025:
         1: Leetcode - 1539: Kth Missing Positive Number - Easy
-        
+    06/12/2025:
+        1: Leetcode - 74 : Searching in a 2D Sorted Matrix: Medium 
      
