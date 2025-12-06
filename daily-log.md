@@ -26,6 +26,8 @@ Week - 02:
         2: Leetcode - 441: Arranging coins - Easy
     03/12/2025:
         1: Leetcode - 1539: Kth Missing Positive Number - Easy
-    06/12/2025:
-        1: Leetcode - 74 : Searching in a 2D Sorted Matrix: Medium 
+    05/12/2025:
+        1: Leetcode - 74 : Searching in a 2D Sorted Matrix: Medium
+    06/12/2025: 
+        1: Leetcode - 74_2: It is the second solution for the leetcode 74th problem which is Search in Sorted Matrix 
      
