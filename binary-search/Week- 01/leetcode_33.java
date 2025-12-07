@@ -36,8 +36,8 @@ class Solution {
              *   Then it will be our Pivot
              */
             else if(mid < end && arr[mid] > arr[mid+1]) return mid;
-            /*
-            *   If the mid element is smaller than the start element
+            /**
+            *   If the mid element is Equal to or smaller than the start element
                 then we can say that all the elements after the mid wil be
                 smaller than the start element so change the end = mid-1  */
             else if(arr[mid] <= arr[start]) end = mid-1;

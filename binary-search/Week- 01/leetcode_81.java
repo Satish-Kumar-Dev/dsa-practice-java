@@ -1,11 +1,21 @@
 class Solution {
     public boolean search(int[] arr, int target) {
-        if(arr.length == 1) return arr[0]==target ? true : false;
         int pivotIndex = pivot(arr);
         if(pivotIndex == -1){
+            /**
+             * If the pivot index is not found then the Array is not rotated
+             * then we can do normal binary search
+             */
             return binarySearch(0, arr.length-1, arr, target);
         }
-        if(arr[pivotIndex] == target) return true;
+        /**
+         * Return if the Pivot element is equal to the target
+         */
+        if(arr[pivotIndex] == target) return pivotIndex;
+        /**
+         * If the start element less than or equal to the target then
+         * we need to search from start to the pivot
+         * */
         else if(arr[0] <= target) return binarySearch(0, pivotIndex-1, arr, target);
         else return binarySearch(pivotIndex+1, arr.length-1, arr, target);
     }
@@ -29,7 +39,7 @@ class Solution {
         while(start <= end){
             int mid = start + (end - start)/2;
             /**
-             We need to chech for 4 cases here
+             We need to check for 4 cases here
              First 2 are to check whether to take mid or mid-1 equals pivot
              */
             if((mid > start) && arr[mid]<arr[mid-1]) return mid-1;
@@ -57,7 +67,7 @@ class Solution {
              So then we can check for the pivot element after the mid
              */
             else if(arr[start] < arr[mid] || (arr[start] == arr[end] && arr[mid] > arr[end])) start = mid+1;
-                // Last condition whille arr[mid] < arr[end] or start equals  end && mid > start
+                // Last condition if arr[mid] < arr[end] or start equals  end && arr[mid] < arr[start]
             else end = mid-1;
         }
         return -1;

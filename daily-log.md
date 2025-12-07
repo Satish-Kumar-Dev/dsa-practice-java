@@ -29,5 +29,7 @@ Week - 02:
     05/12/2025:
         1: Leetcode - 74 : Searching in a 2D Sorted Matrix: Medium
     06/12/2025: 
-        1: Leetcode - 74_2: It is the second solution for the leetcode 74th problem which is Search in Sorted Matrix 
+        1: Leetcode - 74_2: It is the second solution for the leetcode 74th problem which is Search in Sorted Matrix
+    07/12/2025:
+        1: Leetcode - 1352: Count Negative Numbers in a Sorted Matrix - Easy
      
