@@ -34,4 +34,5 @@ Week - 02:
         1: Leetcode - 1352: Count Negative Numbers in a Sorted Matrix - Easy
     08/12/2025:
         1: Leetcode - 509: Fibonacci Using Recursion - Easy
+        2: Leetcode - 1342: Number of Steps to Reduce a Number to Zero - Easy
      
