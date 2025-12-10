@@ -35,4 +35,9 @@ Week - 02:
     08/12/2025:
         1: Leetcode - 509: Fibonacci Using Recursion - Easy
         2: Leetcode - 1342: Number of Steps to Reduce a Number to Zero - Easy
-     
+    09/12/2025: 
+        1: Leetcode - 2418: Arranging people according to their heights - Easy
+        2: Leetcode - 2418_bubble_sort: Arranging people according to their heights using bubble sort- Easy
+    10/12/2025:
+        1: Practice on Binary Search Problem - Recap - Leetcode 81
+  

@@ -39,7 +39,7 @@ class Solution {
         while(start <= end){
             int mid = start + (end - start)/2;
             /**
-             We need to check for 4 cases here
+             We need to check for extra 4 cases here
              First 2 are to check whether to take mid or mid-1 equals pivot
              */
             if((mid > start) && arr[mid]<arr[mid-1]) return mid-1;
@@ -50,11 +50,15 @@ class Solution {
 
              */
             else if((arr[mid] == arr[start]) && arr[mid]==arr[end]){
-                // If starting element greater than its next element then return start
+                /** If starting element greater than its next element then return start
+                 * or we need to move the start
+                 */
                 if(start < end && arr[start] > arr[start+1]) return start;
 
                 start++;
-                // If last element is smaller than its previous elements then 2nd element from the last will be pivot
+                /** If last element is smaller than its previous elements then 2nd element from the last will be pivot
+                 * or we need to move the end
+                 */
                 if(end > start && arr[end] < arr[end-1]) return end-1;
                 end--;
             }
@@ -62,8 +66,8 @@ class Solution {
              If any one of these
              1. If start element is smaller than the middle element or
              2. Combination of 2 conditions
-             a. start and end elements must be same
-             b. middle element must be greater than the last element
+                 a. start and end elements must be same
+                 b. middle element must be greater than the last element
              So then we can check for the pivot element after the mid
              */
             else if(arr[start] < arr[mid] || (arr[start] == arr[end] && arr[mid] > arr[end])) start = mid+1;
