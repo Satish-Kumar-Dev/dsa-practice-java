@@ -40,4 +40,5 @@ Week - 02:
         2: Leetcode - 2418_bubble_sort: Arranging people according to their heights using bubble sort- Easy
     10/12/2025:
         1: Practice on Binary Search Problem - Recap - Leetcode 81
-  
+    11/12/2025:
+        1: Practice on Binary Search Problem - Recap - Leetcode 81  
