@@ -41,4 +41,7 @@ Week - 02:
     10/12/2025:
         1: Practice on Binary Search Problem - Recap - Leetcode 81
     11/12/2025:
-        1: Practice on Binary Search Problem - Recap - Leetcode 81  
+        1: Practice on Binary Search Problem - Recap - Leetcode 81 
+Week - 03:
+    15/12/2025:
+        1: 2942: Find words containing character - Easy 
