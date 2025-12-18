@@ -45,3 +45,7 @@ Week - 02:
 Week - 03:
     15/12/2025:
         1: 2942: Find words containing character - Easy 
+    16/12/2025: 
+        Leetcode - 17: Letter Combinations of a Phone Number - Medium
+    18/12/2025: 
+        leetcode - 46: Permutations - Medium
