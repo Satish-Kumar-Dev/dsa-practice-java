@@ -49,5 +49,7 @@ Week - 03:
         Leetcode - 17: Letter Combinations of a Phone Number - Medium
     18/12/2025: 
         leetcode - 46: Permutations - Medium
-    18/12/2025:
+    19/12/2025:
+        leetcode - 46: Permutations - Practice - Medium
+    20/12/2025:
         leetcode - 46: Permutations - Practice - Medium
