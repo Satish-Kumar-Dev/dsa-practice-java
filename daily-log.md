@@ -56,3 +56,6 @@ Week - 03:
     21/12/2025: 
         leetcode - 46 - Practice
         leetcode - 17 - Practice
+    22/12/2025:
+        leetcode - 46 - Practice
+        leetcode - 17 - Practice
