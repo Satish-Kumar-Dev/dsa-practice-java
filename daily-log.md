@@ -53,9 +53,13 @@ Week - 03:
         leetcode - 46: Permutations - Practice - Medium
     20/12/2025:
         leetcode - 46: Permutations - Practice - Medium
-    21/12/2025: 
+    21/12/2025:
         leetcode - 46 - Practice
         leetcode - 17 - Practice
+Week - 04:
     22/12/2025:
+        leetcode - 46 - Practice
+        leetcode - 17 - Practice
+    23/12/2025:
         leetcode - 46 - Practice
         leetcode - 17 - Practice
