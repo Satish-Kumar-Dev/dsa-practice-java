@@ -63,3 +63,6 @@ Week - 04:
     23/12/2025:
         leetcode - 46 - Practice
         leetcode - 17 - Practice
+    24/12/2025:
+        leetcode - 46 - Practice
+        leetcode - 17 - Practice
