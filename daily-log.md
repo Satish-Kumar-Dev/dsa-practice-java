@@ -66,3 +66,6 @@ Week - 04:
     24/12/2025:
         leetcode - 46 - Practice
         leetcode - 17 - Practice
+    25/12/205:
+        leetcode - 51 - N-Queens - Hard
+        leetcode - 52 - N-Queens ii - Hard
