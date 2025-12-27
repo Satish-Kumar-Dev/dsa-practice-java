@@ -69,6 +69,10 @@ Week - 04:
     25/12/205:
         leetcode - 51 - N-Queens - Hard
         leetcode - 52 - N-Queens ii - Hard
-    24/12/2025:
+    26/12/2025:
         leetcode - 51 - Practice
         leetcode - 52 - Practice
+    27/12/2025:
+        leetcode - 37 - Sudoku Solver - Hard
+        leetcode - 46 - Permutations - Practice
+        leetcode - 17 - Letter Combination of Phone Number Practice
