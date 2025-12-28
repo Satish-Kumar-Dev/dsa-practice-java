@@ -44,6 +44,8 @@ class Solution {
              */
             if((mid > start) && arr[mid]<arr[mid-1]) return mid-1;
             else if((mid < end) && arr[mid] > arr[mid+1]) return mid;
+
+
             /**If Start and End values are same we can skip them,
              But before skipping them we need to check whether their
              neighbour numbers are Pivot or not
