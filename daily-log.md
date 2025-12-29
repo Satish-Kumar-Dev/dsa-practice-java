@@ -77,4 +77,7 @@ Week - 04:
         leetcode - 46 - Permutations - Practice
         leetcode - 17 - Letter Combination of Phone Number Practice
 Week - 05:
+    28/12/2025:
         leetcode - 198 - House Robber - Dynamic Programming.
+    29/12/2025:
+        leetcode - 52 - NQueens - ii - practice
