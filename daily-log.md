@@ -81,3 +81,5 @@ Week - 05:
         leetcode - 198 - House Robber - Dynamic Programming.
     29/12/2025:
         leetcode - 52 - NQueens - ii - practice
+    30/12/2025:
+        leetcode - 52 - NQueens - ii - practice
