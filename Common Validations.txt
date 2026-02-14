@@ -1,0 +1,144 @@
+🟢 COMMON VALIDATIONS
+
+(Apply to INTR + NEFT + RTGS)
+
+These validations must run for every transaction.
+
+1️⃣ Debit Account Validation
+
+Table: DEBIT_ACCOUNT_MASTER
+Error Code: 532
+
+Condition:
+
+If no record for (MODULE_NAME + DEBIT_ACCT_NUM)
+→ reject
+
+2️⃣ Credit Account Validation
+
+Table: ACCOUNT_VIEW
+Error Code: 114
+
+Condition:
+
+If no ACCOUNT_VIEW record
+    IF REM_TYPE = INTR AND length > 14
+        → treat as office account
+    ELSE
+        → reject
+
+
+(Office exception only applies later for INTR — but initial existence check is common.)
+
+3️⃣ NRE Account Check
+
+Table: ACCOUNT_VIEW
+Error Code: 114
+
+Condition:
+
+If NRE_SCHM_FLG = 'Y'
+→ reject
+
+4️⃣ Duplicate Transaction Check
+
+Table: CFMS_CHECK
+Error Code: 913
+
+Condition:
+
+If FTR_NO already exists
+→ reject
+Else insert record
+
+🔵 INTR-SPECIFIC VALIDATIONS
+
+Apply only when:
+
+REM_TYPE = 'INTR'
+
+5️⃣ Transaction Date Validation
+
+Error Code: 205
+
+Condition:
+
+If transactionDate > currentDate
+→ reject
+
+
+(Only for INTR — as per your decision.)
+
+6️⃣ Office Account Special Handling
+
+Condition:
+
+If ACCOUNT_VIEW not found
+AND length > 14
+→ treat as valid office account
+
+
+No separate error — but affects validation outcome.
+
+7️⃣ AmountCheckFlag Validation
+
+Error Code: 114
+
+Condition:
+
+If AmountCheckFlag = 'T'
+→ reject
+
+
+(Channel business rule.)
+
+🟣 NEFT / RTGS-SPECIFIC VALIDATIONS
+
+Apply when:
+
+REM_TYPE = 'NEFT' OR 'RTGS'
+
+8️⃣ Beneficiary IFSC Validation
+
+Table: BANK_VIEW
+Error Code: 206
+
+Condition:
+
+If no BANK_VIEW record for (IFSC + PAYSYS_ID)
+→ reject
+
+9️⃣ Sender Branch IFSC Lookup
+
+Table: BANK_VIEW
+
+Condition:
+
+Lookup using BR_CODE + BANK_CODE + PAYSYS_ID
+
+
+⚠ Not a rejection rule.
+Used for message construction.
+
+1️⃣0️⃣ Address Length Rules
+
+Condition:
+
+If address length > 35
+→ truncate
+
+
+Formatting only.
+
+🔥 Final Clean Validation Matrix
+
+| Validation      | Common | INTR | NEFT/RTGS |
+| --------------- | ------ | ---- | --------- |
+| Debit Account   | ✅      | ✅    | ✅         |
+| Credit Account  | ✅      | ✅    | ✅         |
+| NRE Check       | ✅      | ✅    | ✅         |
+| Duplicate Check | ✅      | ✅    | ✅         |
+| Date Check      | ❌      | ✅    | ❌         |
+| Amount Flag     | ❌      | ✅    | ❌         |
+| IFSC Validation | ❌      | ❌    | ✅         |
+	
