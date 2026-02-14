@@ -1,0 +1,836 @@
+BROKER SCHEMA ubi.eai.service.provider.utilities
+DECLARE I SHARED INTEGER  0;
+DECLARE stan SHARED INTEGER 1;
+CREATE FUNCTION splitChar( IN S CHARACTER, IN Env REFERENCE, IN Delim CHARACTER) RETURNS CHAR
+BEGIN
+	DECLARE P INTEGER; 
+   	DECLARE I INTEGER 1;
+  	REPEAT 
+       SET P = POSITION(Delim IN S); 
+       IF P = 0 THEN 
+         SET Env.Split.Array[I] = S; 
+       ELSE 
+         SET Env.Split.Array[I] = LEFT(S, P - 1); 
+         SET S = SUBSTRING(S FROM P + LENGTH(Delim)); 
+         SET I = I + 1; 
+       END IF; 
+   UNTIL P = 0 
+   END REPEAT;
+   RETURN 'TRUE';
+END; 
+ 
+CREATE FUNCTION modifyField102_neft( in_accountNo CHAR,solID CHAR) RETURNS CHAR
+BEGIN
+  	DECLARE FIELD_102_PREFIX CHAR '026        ';--026 followed by 8 spaces
+	DECLARE branchCode CHAR solID;
+	DECLARE FIELD_102_BRANCHCODE_SEPARATOR CHAR '   '; -- 2 SPACES
+	DECLARE FIELD_102_SUFFIX CHAR '    '; -- 4 SPACES
+	DECLARE return_value CHARACTER FIELD_102_PREFIX||branchCode||FIELD_102_BRANCHCODE_SEPARATOR||in_accountNo||FIELD_102_SUFFIX;
+  	RETURN return_value;
+END;
+ 
+--CREATE FUNCTION modifyField103_neft( in_accountNo CHAR,bankId CHAR ,soleID CHAR) RETURNS CHAR
+-- BEGIN
+--  	DECLARE lenin_accountNo INTEGER LENGTH(in_accountNo);
+--  	DECLARE FIELD_103_PREFIX CHAR '  '||bankId||'        ';--2 spaces followed by 026 followed by 8 spaces
+--	DECLARE lenbranchCode INTEGER LENGTH(soleID);
+--	DECLARE lenExceed1 INTEGER (8 - lenbranchCode);
+--	DECLARE FIELD_103_BRANCHCODE_SEPARATOR CHAR soleID||REPLICATE(' ',lenExceed1);
+--	DECLARE lenExceed2 INTEGER (19 - lenin_accountNo);
+--	DECLARE FIELD_103_SUFFIX CHAR in_accountNo||REPLICATE(' ',lenExceed2); 
+--	
+--	DECLARE return_value CHARACTER FIELD_103_PREFIX||FIELD_103_BRANCHCODE_SEPARATOR||FIELD_103_SUFFIX;
+--  	RETURN return_value;
+-- END;
+--================================  FIELD 103 MODIFIED ======================
+CREATE FUNCTION modifyField103_neft( in_accountNo CHAR,bankId CHAR ,soleID CHAR) RETURNS CHAR
+BEGIN
+	DECLARE lenin_accountNo INTEGER LENGTH(in_accountNo);
+	DECLARE FIELD_103_PREFIX CHARACTER;
+	DECLARE lenbankid INTEGER LENGTH(bankId);
+	DECLARE lenbankexceed INTEGER (11 - lenbankid);
+	IF lenbankid > 3 THEN
+		SET FIELD_103_PREFIX = '  '||bankId;
+		SET FIELD_103_PREFIX = FIELD_103_PREFIX||REPLICATE(' ',lenbankexceed);
+	ELSE
+		SET FIELD_103_PREFIX = '  '||bankId||'        ';--2 spaces followed by 026 followed by 8 spaces
+	END IF;
+	DECLARE lenbranchCode INTEGER LENGTH(soleID);
+	DECLARE lenExceed1 INTEGER (8 - lenbranchCode);
+	DECLARE FIELD_103_BRANCHCODE_SEPARATOR CHAR soleID||REPLICATE(' ',lenExceed1);
+	DECLARE lenExceed2 INTEGER (19 - lenin_accountNo);
+	DECLARE FIELD_103_SUFFIX CHAR in_accountNo||REPLICATE(' ',lenExceed2); 
+	DECLARE return_value_length CHARACTER;
+	DECLARE return_value CHARACTER;
+	DECLARE return_value_temp CHARACTER;
+	SET return_value_temp = FIELD_103_PREFIX||FIELD_103_BRANCHCODE_SEPARATOR||FIELD_103_SUFFIX;
+	--DECLARE return_value_temp CHARACTER FIELD_103_PREFIX||FIELD_103_BRANCHCODE_SEPARATOR||FIELD_103_SUFFIX;
+	SET return_value_length = LENGTH(return_value_temp);
+	IF (return_value_length >40) THEN 
+		SET return_value_temp=SUBSTRING(return_value_temp FROM 1 FOR 40);
+	END IF;
+	RETURN return_value_temp;
+END;
+ --======================================================
+
+--
+--CREATE FUNCTION buildField125(transID CHAR,benAccNo CHAR,benName CHAR,benAddr1 CHAR,benAddr2 CHAR,benAddr3 CHAR,benAddr4 CHAR,benState CHAR,benZip CHAR,benIFSCCode CHAR,
+--                               debAccNum CHAR,BenMobNum CHAR,BenEmail CHAR,TransAmount DECIMAL,TranDate CHAR,
+--                                RemName CHAR,RemAddr1 CHAR,RemAddr2 CHAR,RemAddr3 CHAR,RemMob CHAR,RemEmail CHAR,CountryCode CHAR,transParticular CHAR,
+--                               senderReceiverInfo1 CHAR,paymentDetails1 CHAR,checkAmount DECIMAL,NeftCreditAccountNum CHARACTER,RtgsCreditAccountNum CHARACTER,IN env REFERENCE) RETURNS CHARACTER
+-- 
+-- BEGIN
+-- 	    DECLARE paysysID CHARACTER;
+--		DECLARE msgType  CHARACTER;
+-- 	    DECLARE crAcctId CHARACTER;
+--		DECLARE chrgEventID CHARACTER;
+--		DECLARE msgPriority CHARACTER '99';
+--		DECLARE toBankID CHARACTER ;
+--		DECLARE toBranchID CHARACTER;
+--		DECLARE currency CHARACTER 'INR'; 
+-- 	    DECLARE senderReceiverInfo2 CHARACTER '';
+--		DECLARE senderReceiverInfo3 CHARACTER '';
+--		DECLARE senderReceiverInfo4 CHARACTER;
+--		DECLARE senderReceiverInfo5 CHARACTER;
+--		DECLARE senderReceiverInfo6 CHARACTER '';
+--		DECLARE frmIFSCCode CHARACTER;
+--		DECLARE brcode CHARACTER; 
+--		DECLARE frmBankID CHARACTER '026';
+--		DECLARE frmbrnchID CHARACTER;
+--		DECLARE  frmSolID CHARACTER;
+--		DECLARE ResField125 CHARACTER '';
+--		DECLARE BenAddr CHARACTER '';
+--		DECLARE RemAddr CHARACTER '';
+--		DECLARE castTransAmount DECIMAL ;
+--		DECLARE debitAccNum CHARACTER debAccNum;
+--		SET castTransAmount= CAST(TransAmount AS DECIMAL);
+--		
+--		IF(TransAmount < checkAmount)THEN
+--					   	SET paysysID = 'NEFT';
+--					   	SET msgType = 'N06';
+--						SET chrgEventID = 'NEFTO';
+--						SET crAcctId = NeftCreditAccountNum;
+--						--SET senderReceiverInfo4=RemMob;
+--						SET senderReceiverInfo4= BenMobNum;
+--						SET senderReceiverInfo5= BenEmail;
+--					ELSE
+--						SET paysysID = 'RTGS';
+--					   	SET msgType = 'R41';
+--						SET chrgEventID = 'RTGSO';
+--						SET crAcctId = RtgsCreditAccountNum;
+--						SET senderReceiverInfo4= BenMobNum;
+--						SET senderReceiverInfo5= BenEmail;
+--		END IF;
+--		
+--		
+--		
+--		-------commented by rohan
+-- 	    SET env.brcode[]=(select E.br_code from Database.account_view As E where E.foracid=debitAccNum);
+--		Set brcode=env.brcode.*[1];
+----		SET env.toBankID[]=PASSTHRU('select D.bank_code from bank_view D where D.bank_identifier=? And D.paysys_id=?',benIFSCCode,paysysID);
+----		SET toBankID=env.toBankID.*[1];
+----		SET env.toBranchID[]=select D.br_code from Database.bank_view As D where D.bank_identifier=benIFSCCode And D.paysys_id=paysysID; 
+----		SET toBranchID= env.toBranchID.*[1];
+----		SET env.frmBrnchID[]=PASSTHRU('Select D.BR_CODE from account_view D where D.foracid = ?', debitAccNum);
+----		SET env.frmSolID[]=PASSTHRU('Select D.SOL_ID from account_view D where D.foracid = ?', debitAccNum);
+----		DECLARE  frmSolID CHARACTER env.frmSolID.*[1];
+---- 	    SET frmbrnchID=env.frmBrnchID.*[1];
+-- 	  -- 	SET env.frmIFSCCode[]=(Select D.bank_identifier from Database.bank_view As D where D.br_code =(Select E.BR_CODE from Database.account_view As E where E.foracid=debitAccNum)) ;
+-- 	   SET env.frmIFSCCode[]= SELECT E.bank_identifier FROM Database.account_view AS D,Database.bank_view  AS E  WHERE D.foracid=debitAccNum AND E.br_code=D.br_code AND E.paysys_id=paysysID;
+-- 	    --SET env.frmIFSCCode[]=PASSTHRU('select BANK_IDENTIFIER from bank_view where BR_CODE=(select BR_CODE from account_view where foracid=?) AND  PAYSYS_ID=?'debitAccNum,paysysID);
+-- 	    SET frmIFSCCode=env.frmIFSCCode.*[1];
+-- 
+-- 	-------commented by rohan
+-- 	    SET env.frmBrnchID[]=PASSTHRU('Select * from account_view D where D.foracid = ?', debitAccNum); 
+-- 	    SET frmbrnchID=env.frmBrnchID.*[20];
+-- 	    SET frmSolID = env.frmBrnchID.*[7];
+-- 	    SET env.toBankID[]=PASSTHRU('select * from bank_view D where D.bank_identifier=? And D.paysys_id=?',benIFSCCode,paysysID);
+-- 	    SET toBankID=env.toBankID.*[2];
+-- 	    SET toBranchID  = env.toBankID.*[1];
+-- 	    IF( CARDINALITY(env.brcode[]) = 0 OR CARDINALITY(env.frmIFSCCode[]) = 0 OR CARDINALITY(env.frmBrnchID[]) = 0 OR CARDINALITY(env.toBankID[]) = 0) THEN
+-- 	        SET ResField125 = 'Unable to fetch values from Finacle Database';
+-- 	        RETURN ResField125;
+-- 	        ELSE
+-- 	         SET ResField125='20'||'|'||paysysID||'|'||msgType||'|'||'T'||'|'||frmSolID||'|'||debitAccNum||'|';
+-- 	         SET ResField125=ResField125||crAcctId||'|'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'dd-MM-yyyy HH:mm:ss')||'|'||msgPriority||'|'||currency||'|'||CAST(castTransAmount AS CHARACTER)||'|'||toBankID||'|';
+-- 	         SET ResField125=ResField125||toBranchID||'|'||benIFSCCode||'|'||RemName||'|'||RemAddr1||'|'||benAccNo||'|';
+-- 	         SET ResField125=ResField125||benName||'|'||benAddr1||'|'||'/abc/'||'|'||chrgEventID||'|'||debitAccNum||'|';
+-- 	         SET ResField125=ResField125||transParticular||'|'||frmBankID||'|'||frmbrnchID||'|'||frmIFSCCode||'||'||frmBankID||'|'||frmIFSCCode||'|||'||RemAddr2||'|'||RemAddr3||'|||||||||'||benAddr2||'|'||benAddr3||'|';
+-- 	         DECLARE ResField125_1 CHARACTER  paymentDetails1||'|||||'||senderReceiverInfo2||'|'||senderReceiverInfo3||'|'||'|'||'|'||'|'||'|'||senderReceiverInfo6||'|||||'||benAddr4||'|';
+-- 	         SET ResField125=ResField125||ResField125_1;
+-- 	         SET ResField125=ResField125||benState||'|'||'INDIA'||'|'||benZip||'|';
+-- 	        IF (ResField125 IS NULL) THEN 
+-- 	           SET ResField125 = 'One or more fields in the records is NULL';
+-- 	           RETURN ResField125;
+-- 	        END IF;
+--            RETURN ResField125;
+-- 	     END IF;
+-- END;
+ 
+CREATE FUNCTION buildField125_new1(remtype CHAR,transID CHAR,benAccNo CHAR,benName CHAR,benAddr1 CHAR,benAddr2 CHAR,benAddr3 CHAR,benAddr4 CHAR,benState CHAR,benZip CHAR,benIFSCCode CHAR,
+                               debAccNum CHAR,BenMobNum CHAR,BenEmail CHAR,TransAmount DECIMAL,TranDate CHAR,
+                               RemName CHAR,RemAddr1 CHAR,RemAddr2 CHAR,RemAddr3 CHAR,RemMob CHAR,RemEmail CHAR,CountryCode CHAR,transParticular CHAR,
+                               senderReceiverInfo1 CHAR,paymentDetails1 CHAR,checkAmount DECIMAL,NeftCreditAccountNum CHARACTER,RtgsCreditAccountNum CHARACTER,IN env REFERENCE) RETURNS CHARACTER
+BEGIN
+	DECLARE product CHARACTER;
+	DECLARE paysysID CHARACTER;
+	DECLARE msgType  CHARACTER;
+	DECLARE crAcctId CHARACTER;
+	DECLARE chrgEventID CHARACTER;
+	DECLARE msgPriority CHARACTER '99';
+	--SET transParticular = 'EAI_'||product||'|'||transID;
+	DECLARE toBankID CHARACTER ;
+	DECLARE toBranchID CHARACTER;
+	DECLARE currency CHARACTER 'INR'; 
+	DECLARE senderReceiverInfo2 CHARACTER '';   ----senderCode;
+	DECLARE senderReceiverInfo3 CHARACTER '';--- '//'||purpose||senderCode;
+	SET senderReceiverInfo3 = '';
+	DECLARE senderReceiverInfo4 CHARACTER;
+	DECLARE senderReceiverInfo5 CHARACTER;
+	DECLARE senderReceiverInfo6 CHARACTER '';
+	DECLARE frmIFSCCode CHARACTER;
+	DECLARE brcode CHARACTER; 
+	DECLARE frmBankID CHARACTER '026';
+	DECLARE frmbrnchID CHARACTER;
+	--DECLARE checkAmount DECIMAL '200000.00';
+	--DECLARE NeftCreditAccountNum CHARACTER;
+	--DECLARE RtgsCreditAccountNum CHARACTER;
+	DECLARE ResField125 CHARACTER '';
+	DECLARE BenAddr CHARACTER '';
+	DECLARE RemAddr CHARACTER '';
+	DECLARE castTransAmount DECIMAL ;
+	DECLARE debitAccNum CHARACTER debAccNum;
+	SET castTransAmount= CAST(TransAmount AS DECIMAL);
+	IF(remtype='NEFT')THEN
+		SET paysysID = 'NEFT';
+		SET msgType = 'N06';
+		SET chrgEventID = 'NEFTO';
+		SET crAcctId = NeftCreditAccountNum;
+		SET senderReceiverInfo4=RemMob;
+		SET senderReceiverInfo5=RemEmail;
+	ELSE
+		SET paysysID = 'RTGS';
+		SET msgType = 'R41';
+		SET chrgEventID = 'RTGSO';
+		SET crAcctId = RtgsCreditAccountNum;
+		SET senderReceiverInfo4='';
+		SET senderReceiverInfo5='';
+	END IF;
+	SET env.brcode[]=(select E.br_code from Database.account_view As E where E.foracid=debitAccNum);
+	Set brcode=env.brcode.*[1];
+	SET env.toBankID[]=PASSTHRU('select D.bank_code from bank_view D where D.bank_identifier=? And D.paysys_id=?',benIFSCCode,paysysID);
+	SET toBankID=env.toBankID.*[1];
+	SET env.toBranchID[]=select D.br_code from Database.bank_view As D where D.bank_identifier=benIFSCCode And D.paysys_id=paysysID; 
+	SET toBranchID= env.toBranchID.*[1];
+	SET env.frmBrnchID[]=PASSTHRU('Select D.BR_CODE from account_view D where D.foracid = ?', debitAccNum);
+	SET env.frmSolID[]=PASSTHRU('Select D.SOL_ID from account_view D where D.foracid = ?', debitAccNum);
+	DECLARE  frmSolID CHARACTER env.frmSolID.*[1];
+	SET frmbrnchID=env.frmBrnchID.*[1];
+	  -- 	SET env.frmIFSCCode[]=(Select D.bank_identifier from Database.bank_view As D where D.br_code =(Select E.BR_CODE from Database.account_view As E where E.foracid=debitAccNum)) ;
+	  SET env.frmIFSCCode[]=SELECT E.bank_identifier FROM Database.account_view AS D,Database.bank_view  AS E  WHERE D.foracid=debitAccNum AND E.br_code=D.br_code AND E.paysys_id=paysysID;
+	SET frmIFSCCode=env.frmIFSCCode.*[1];
+	--SET BenAddr=benAddr1||' '||benAddr2||' '||benAddr3;
+	--SET RemAddr=RemAddr1||' '||RemAddr2||' '||RemAddr3;
+	SET ResField125='20'||'|'||paysysID||'|'||msgType||'|'||'T'||'|'||frmSolID||'|'||debitAccNum||'|';
+	SET ResField125=ResField125||crAcctId||'|'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'dd-MM-yyyy HH:mm:ss')||'|'||msgPriority||'|'||currency||'|'||CAST(castTransAmount AS CHARACTER)||'|'||toBankID||'|';
+	SET ResField125=ResField125||toBranchID||'|'||benIFSCCode||'|'||RemName||'|'||RemAddr1||'|'||benAccNo||'|';
+	SET ResField125=ResField125||benName||'|'||benAddr1||'|'||senderReceiverInfo1||'|'||chrgEventID||'|'||debitAccNum||'|';
+	SET ResField125=ResField125||transParticular||'|'||frmBankID||'|'||frmbrnchID||'|'||frmIFSCCode||'||'||frmBankID||'|'||frmIFSCCode||'|||'||RemAddr2||'|'||RemAddr3||'|||||||||'||benAddr2||'|'||benAddr3||'|';
+	DECLARE ResField125_1 CHARACTER  paymentDetails1||'|||||'||senderReceiverInfo2||'|'||senderReceiverInfo3||'|'||senderReceiverInfo4||'|'||senderReceiverInfo5||'|'||senderReceiverInfo6||'|||||'||benAddr4||'|';
+	SET ResField125=ResField125||ResField125_1;
+	SET ResField125=ResField125||benState||'|'||'INDIA'||'|'||benZip||'|';
+	RETURN ResField125;
+ END;
+ 
+-- CREATE FUNCTION buildField125_new(transID CHAR,benAccNo CHAR,benName CHAR,benAddr1 CHAR,benAddr2 CHAR,benAddr3 CHAR,benAddr4 CHAR,benState CHAR,benZip CHAR,benIFSCCode CHAR,
+--                               debAccNum CHAR,BenMobNum CHAR,BenEmail CHAR,TransAmount DECIMAL,TranDate CHAR,
+--                               RemName CHAR,RemAddr1 CHAR,RemAddr2 CHAR,RemAddr3 CHAR,RemMob CHAR,RemEmail CHAR,CountryCode CHAR,transParticular CHAR,
+--                               senderReceiverInfo1 CHAR,paymentDetails1 CHAR,checkAmount DECIMAL,NeftCreditAccountNum CHARACTER,RtgsCreditAccountNum CHARACTER,IN env REFERENCE) RETURNS CHARACTER
+-- 
+-- BEGIN
+-- 	    DECLARE paysysID CHARACTER;
+--		DECLARE msgType  CHARACTER;
+-- 	    DECLARE crAcctId CHARACTER;
+--		DECLARE chrgEventID CHARACTER;
+--		DECLARE msgPriority CHARACTER '99';
+--		DECLARE toBankID CHARACTER ;
+--		DECLARE toBranchID CHARACTER;
+--		DECLARE currency CHARACTER 'INR'; 
+-- 	    DECLARE senderReceiverInfo2 CHARACTER '';   ----senderCode;
+--		DECLARE senderReceiverInfo3 CHARACTER '';--- '//'||purpose||senderCode;
+--		SET senderReceiverInfo3 = '';
+--		
+--		DECLARE senderReceiverInfo4 CHARACTER;
+--		DECLARE senderReceiverInfo5 CHARACTER;
+--		DECLARE senderReceiverInfo6 CHARACTER '';
+--		DECLARE frmIFSCCode CHARACTER;
+--		DECLARE brcode CHARACTER; 
+--		DECLARE frmBankID CHARACTER '026';
+--		DECLARE frmbrnchID CHARACTER;
+--		--DECLARE checkAmount DECIMAL '200000.00';
+--		--DECLARE NeftCreditAccountNum CHARACTER;
+--		--DECLARE RtgsCreditAccountNum CHARACTER;
+--		DECLARE ResField125 CHARACTER '';
+--		DECLARE BenAddr CHARACTER '';
+--		DECLARE RemAddr CHARACTER '';
+--		DECLARE castTransAmount DECIMAL ;
+--		DECLARE debitAccNum CHARACTER debAccNum;
+--		SET castTransAmount= CAST(TransAmount AS DECIMAL);
+--		IF(TransAmount < checkAmount)THEN
+--					   	SET paysysID = 'NEFT';
+--					   	SET msgType = 'N06';
+--						SET chrgEventID = 'NEFTO';
+--						SET crAcctId = NeftCreditAccountNum;
+--						SET senderReceiverInfo4=RemMob;
+--						SET senderReceiverInfo5=RemEmail;
+--					ELSE
+--						SET paysysID = 'RTGS';
+--					   	SET msgType = 'R41';
+--						SET chrgEventID = 'RTGSO';
+--						SET crAcctId = RtgsCreditAccountNum;
+--						SET senderReceiverInfo4='';
+--						SET senderReceiverInfo5='';
+--		END IF;
+-- 	    SET env.brcode[]=(select E.br_code from Database.account_view As E where E.foracid=debitAccNum);
+--		Set brcode=env.brcode.*[1];
+--		SET env.toBankID[]=PASSTHRU('select D.bank_code from bank_view D where D.bank_identifier=? And D.paysys_id=?',benIFSCCode,paysysID);
+--		SET toBankID=env.toBankID.*[1];
+--		SET env.toBranchID[]=select D.br_code from Database.bank_view As D where D.bank_identifier=benIFSCCode And D.paysys_id=paysysID; 
+--		SET toBranchID= env.toBranchID.*[1];
+--		SET env.frmBrnchID[]=PASSTHRU('Select D.BR_CODE from account_view D where D.foracid = ?', debitAccNum);
+--		SET env.frmSolID[]=PASSTHRU('Select D.SOL_ID from account_view D where D.foracid = ?', debitAccNum);
+--		DECLARE  frmSolID CHARACTER env.frmSolID.*[1];
+-- 	    SET frmbrnchID=env.frmBrnchID.*[1];
+-- 	  -- 	SET env.frmIFSCCode[]=(Select D.bank_identifier from Database.bank_view As D where D.br_code =(Select E.BR_CODE from Database.account_view As E where E.foracid=debitAccNum)) ;
+-- 	   SET env.frmIFSCCode[]=SELECT E.bank_identifier FROM Database.account_view AS D,Database.bank_view  AS E  WHERE D.foracid=debitAccNum AND E.br_code=D.br_code AND E.paysys_id=paysysID;
+-- 	    SET frmIFSCCode=env.frmIFSCCode.*[1];
+-- 	    --SET BenAddr=benAddr1||' '||benAddr2||' '||benAddr3;
+-- 	    --SET RemAddr=RemAddr1||' '||RemAddr2||' '||RemAddr3;
+-- 	    
+-- 	    
+-- 	    SET ResField125='20'||'|'||paysysID||'|'||msgType||'|'||'T'||'|'||frmSolID||'|'||debitAccNum||'|';
+-- 	    SET ResField125=ResField125||crAcctId||'|'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'dd-MM-yyyy HH:mm:ss')||'|'||msgPriority||'|'||currency||'|'||CAST(castTransAmount AS CHARACTER)||'|'||toBankID||'|';
+-- 	    SET ResField125=ResField125||toBranchID||'|'||benIFSCCode||'|'||RemName||'|'||RemAddr1||'|'||benAccNo||'|';
+-- 	    SET ResField125=ResField125||benName||'|'||benAddr1||'|'||senderReceiverInfo1||'|'||chrgEventID||'|'||debitAccNum||'|';
+-- 	    SET ResField125=ResField125||transParticular||'|'||frmBankID||'|'||frmbrnchID||'|'||frmIFSCCode||'||'||frmBankID||'|'||frmIFSCCode||'|||'||RemAddr2||'|'||RemAddr3||'|||||||||'||benAddr2||'|'||benAddr3||'|';
+-- 	    DECLARE ResField125_1 CHARACTER  paymentDetails1||'|||||'||senderReceiverInfo2||'|'||senderReceiverInfo3||'|'||senderReceiverInfo4||'|'||senderReceiverInfo5||'|'||senderReceiverInfo6||'|||||'||benAddr4||'|';
+-- 	    SET ResField125=ResField125||ResField125_1;
+-- 	    SET ResField125=ResField125||benState||'|'||'INDIA'||'|'||benZip||'|';
+-- 	    
+-- 	    RETURN ResField125;
+-- END;
+
+
+
+CREATE FUNCTION AccountFormat(TransactionAmount DECIMAL) RETURNS CHARACTER
+BEGIN
+	DECLARE amount CHARACTER '';
+	DECLARE TransAmount INTEGER CAST(TransactionAmount*100 AS INTEGER);
+	SET amount=CAST(TransAmount As CHARACTER);
+	SET amount = REPLICATE('0', 16-LENGTH(amount))||amount;
+	RETURN amount;
+END;
+	
+	
+CREATE FUNCTION modifyField102WithInUBI( in_accountNo 	CHAR) RETURNS CHAR
+BEGIN
+  	DECLARE FIELD_102_PREFIX CHAR '026        ';--026 followed by 8 spaces
+	DECLARE branchCode CHAR SUBSTRING(in_accountNo FROM 1 FOR 5);
+	DECLARE FIELD_102_BRANCHCODE_SEPARATOR CHAR '   '; -- 3 SPACES
+	DECLARE FIELD_102_SUFFIX CHAR '    '; -- 4 SPACES
+	DECLARE return_value CHARACTER FIELD_102_PREFIX||branchCode||FIELD_102_BRANCHCODE_SEPARATOR||in_accountNo||FIELD_102_SUFFIX;
+  	RETURN return_value;
+END;
+
+CREATE FUNCTION modifyField102( in_accountNo CHAR,IN env REFERENCE) RETURNS CHAR
+BEGIN
+	SET env.DebitAccNum.SOLEID[] = PASSTHRU('Select D.SOL_ID from ACCOUNT_VIEW D where D.FORACID =?',in_accountNo);
+	DECLARE solID CHARACTER env.DebitAccNum.SOLEID[1].*;
+  	DECLARE FIELD_102_PREFIX CHAR '026        ';--026 followed by 8 spaces
+	DECLARE SoleID CHAR solID;
+	DECLARE FIELD_102_BRANCHCODE_SEPARATOR CHAR '   '; -- 3 SPACES
+	DECLARE FIELD_102_SUFFIX CHAR '    '; -- 4 SPACES
+	DECLARE return_value CHARACTER FIELD_102_PREFIX||SoleID||FIELD_102_BRANCHCODE_SEPARATOR||in_accountNo||FIELD_102_SUFFIX;
+  	RETURN return_value;
+END;
+
+CREATE FUNCTION AUDIT_DATABASE_IN( IN inp REFERENCE)RETURNS BOOLEAN
+BEGIN
+	DECLARE SQLState1 CHARACTER;   
+	DECLARE SQLErrorText1 CHARACTER;   
+	DECLARE SQLCode1 INTEGER;   
+	DECLARE SQLNativeError1 INTEGER;
+	DECLARE Input REFERENCE TO inp.MQRFH2.usr;
+	DECLARE CreationTime TIMESTAMP inp.Properties.CreationTime;
+	DECLARE StatusFlag CHARACTER Input.Audit.StatusFlag;
+	DECLARE inData BLOB inp.BLOB.BLOB;
+	INSERT INTO Database.EAI.EAI_MESSAGE_LOG(MESSAGE_ID,INTERFACE_NAME,INTERFACE_ID,CREATION_TIME,SOURCE,DESTINATION,CURRENT_TIME,STATUS,USER,RRNUMBER,INPUTDATA,CORELID)
+	VALUES(inp.MQMD.MsgId,Input.Audit.InterfaceName,Input.Audit.InterfaceID,CreationTime,Input.Audit.Source,Input.Audit.Destination,CURRENT_TIMESTAMP,Input.Audit.Status,Input.Audit.User,Input.RRN,inData,Input.CorelID);
+--	ELSEIF(StatusFlag='UPDATE') THEN
+--	
+--						Update Database.EAI.MESSAGE_LOG As A SET STATUS=Input.Audit.Status Where 
+--				                                                                 A.RRNUMBER=Input.RRN; 
+--	END IF;		 
+	SET SQLState1 = SQLSTATE;
+	SET SQLCode1 = SQLCODE;
+	SET SQLErrorText1 = SQLERRORTEXT;
+	SET SQLNativeError1 = SQLNATIVEERROR;					  
+    RETURN TRUE;
+END;	
+
+
+CREATE FUNCTION AUDIT_DATABASE_OUT(IN env REFERENCE, IN inp REFERENCE  )RETURNS BOOLEAN
+BEGIN
+	DECLARE SQLState1 CHARACTER;   
+	DECLARE SQLErrorText1 CHARACTER;   
+	DECLARE SQLCode1 INTEGER;   
+	DECLARE SQLNativeError1 INTEGER;
+	INSERT INTO Database.EAI.MESSAGE_LOG(MESSAGE_ID, INTERFACE_NAME, INTERFACE_ID, SOURCE, DESTINATION, DEPARTURE_TIME, STATUS) VALUES( inp.MsgId, env.Audit.InterfaceName, env.Audit.InterfaceID, env.Audit.Source, env.Audit.Destination, CURRENT_TIMESTAMP, env.Audit.Status);
+	SET SQLState1 = SQLSTATE;
+	SET SQLCode1 = SQLCODE;
+	SET SQLErrorText1 = SQLERRORTEXT;
+	SET SQLNativeError1 = SQLNATIVEERROR;
+    RETURN TRUE;
+END;
+
+CREATE FUNCTION AUDIT_DATABASE_ERROR(IN env REFERENCE, IN inp REFERENCE  )RETURNS BOOLEAN
+BEGIN
+	DECLARE SQLState1 CHARACTER;   
+	DECLARE SQLErrorText1 CHARACTER;   
+	DECLARE SQLCode1 INTEGER;   
+	DECLARE SQLNativeError1 INTEGER;
+	INSERT INTO Database.EAI.MESSAGE_LOG(MESSAGE_ID, INTERFACE_NAME, INTERFACE_ID, SOURCE, DESTINATION, DEPARTURE_TIME, STATUS) VALUES( inp.MsgId, env.Audit.InterfaceName, env.Audit.InterfaceID, env.Audit.Source, env.Audit.Destination, CURRENT_TIMESTAMP, 'ERROR');
+	SET SQLState1 = SQLSTATE;
+	SET SQLCode1 = SQLCODE;
+	SET SQLErrorText1 = SQLERRORTEXT;
+	SET SQLNativeError1 = SQLNATIVEERROR;
+    RETURN TRUE;
+ END;
+CREATE FUNCTION FIN_DB(IN env REFERENCE,benfAccNum CHARACTER) RETURNS CHARACTER
+BEGIN
+	SET env.DATA[] = PASSTHRU('Select * from ACCOUNT_VIEW D where D.FORACID =?',benfAccNum);
+	DECLARE nreFlag CHARACTER env.NRE_FLAG[1].*;
+	RETURN env;
+END;
+
+CREATE FUNCTION modifyField102_InvalidAccnt( in_accountNo 	CHAR) RETURNS CHAR
+BEGIN
+  	DECLARE FIELD_102_PREFIX CHAR '026        ';--026 followed by 8 spaces
+	DECLARE branchCode CHAR SUBSTRING(in_accountNo FROM 1 FOR 5);
+	DECLARE FIELD_102_BRANCHCODE_SEPARATOR CHAR '   '; -- 3 SPACES
+	DECLARE FIELD_102_SUFFIX CHAR '    '; -- 4 SPACES
+	DECLARE return_value CHARACTER FIELD_102_PREFIX||branchCode||FIELD_102_BRANCHCODE_SEPARATOR||in_accountNo||FIELD_102_SUFFIX;
+  	RETURN return_value;
+END;
+
+CREATE FUNCTION modifyField103_InvalidAccnt( in_accountNo 	CHAR) RETURNS CHAR
+BEGIN
+  	DECLARE FIELD_103_PREFIX CHAR '  026        ';--2 spaces followed by 026 followed by 8 spaces
+	DECLARE branchCode CHAR SUBSTRING(in_accountNo FROM 1 FOR 5);
+	DECLARE FIELD_103_BRANCHCODE_SEPARATOR CHAR '   '; -- 3 SPACES
+	DECLARE FIELD_103_SUFFIX CHAR '    '; -- 4 SPACES	
+	DECLARE return_value CHARACTER FIELD_103_PREFIX||branchCode||FIELD_103_BRANCHCODE_SEPARATOR||in_accountNo||FIELD_103_SUFFIX;
+  	RETURN return_value;
+END;
+
+CREATE FUNCTION HEADER_DATABASE_IN( IN myInput REFERENCE  )RETURNS BOOLEAN
+BEGIN
+    DECLARE SQLState1 CHARACTER;   
+	DECLARE SQLErrorText1 CHARACTER;   
+	DECLARE SQLCode1 INTEGER;   
+	DECLARE SQLNativeError1 INTEGER;
+	DECLARE MessageMode CHARACTER;
+	SET MessageMode = myInput.MessageMode;  
+-- Make a database insert to a table that does not exist --
+	IF MessageMode = 'ONL' THEN  --FOR ONLINE TRANSACTION
+		INSERT INTO Database.EAI.ONL_HEADER(MESSAGEMODE,SOURCECODE,TARGETCODE,TRANSACTIONREFNO,PROCESSID,CYCLE,MSGNO,TIMESTAMP,TERMINALIP,INSTITUTIONCODE,BRANCHCODE,USERID,CURRENCY,POOLACCOUNT,DATE,TRANSFLAG1,TRANSFLAG2,CHECKER1ID,CHECKER1IDDATETIME,MESSAGETYPE,TRANSACTIONTYPE,SYSDATE) VALUES(myInput.MessageMode,myInput.SourceCode,myInput.TargetCode,myInput.TransactionRefNo,myInput.ProcessID,myInput.Cycle,myInput.MsgNo,myInput.TimeStamp,myInput.TerminalIP,myInput.InstitutionCode,myInput.BranchCode,myInput.UserID,myInput.Currency,myInput.PoolAccount,myInput.Date,myInput.TransFlag1,myInput.Transflag2,myInput.Checker1ID,myInput.Checker1IDDateTime,myInput.MessageType,myInput.TransactionType,CURRENT_DATE);
+    ELSE
+    --IF MessageMode = 'OFF' THEN  --FOR BATCH MODE TRANSACTION
+    	INSERT INTO Database.EAI.BAT_HEADER(MESSAGEMODE,SOURCECODE,TARGETCODE,FILENAME,PROCESSID,CYCLE,MSGNO,TIMESTAMP,TERMINALIP,INSTITUTIONCODE,BRANCHCODE,USERID,CURRENCY,POOLACCOUNT,DATE,TRANSFLAG1,NOOFCREDITS,NOOFDEBITS,TOTALAMOUNTCREDITED,TOTALAMOUNTDEBITED,TRANSACTIONTYPE,SYSDATE,TOTAL_NUMBER_RECORDS,PROCESSED_COUNT) VALUES(myInput.MessageMode,myInput.SourceCode,myInput.TargetCode,myInput.FileName,myInput.ProcessID,myInput.Cycle,myInput.MsgNo,myInput.TimeStamp,myInput.TerminalIP,myInput.InstitutionCode,myInput.BranchCode,myInput.UserID,myInput.Currency,myInput.PoolAccount,myInput.Date,myInput.TransFlag1,myInput.NoOfCredits,myInput.NoOfDebits,myInput.TotalAmountCredited,myInput.TotalAmountDebited,myInput.TransactionType,CURRENT_DATE,0,0);
+    END IF;
+        
+--Retrieve the database return codes --
+	SET SQLState1 = SQLSTATE;
+	SET SQLCode1 = SQLCODE;
+	SET SQLErrorText1 = SQLERRORTEXT;
+	SET SQLNativeError1 = SQLNATIVEERROR;
+    RETURN TRUE;
+END;
+
+CREATE FUNCTION DATE_VALIDATION( IN TransactionDate REFERENCE,IN Flag REFERENCE  )RETURNS CHARACTER
+BEGIN
+	    		DECLARE TransDate CHARACTER ;
+				DECLARE TransactionDate_Date CHARACTER;
+				SET TransactionDate_Date = SUBSTRING(TransactionDate FROM 1 FOR 2);
+				DECLARE TransactionDate_Month CHARACTER;
+				SET TransactionDate_Month = SUBSTRING(TransactionDate FROM 3 FOR 2);
+				DECLARE TransactionDate_Year CHARACTER;
+				SET TransactionDate_Year = SUBSTRING(TransactionDate FROM 5 FOR 4);
+				IF Flag='Y' THEN
+  					SET TransDate=TransactionDate_Year||'-'||TransactionDate_Month||'-'||TransactionDate_Date;
+				ELSE
+					SET TransDate=TransactionDate_Year||TransactionDate_Month||TransactionDate_Date;	
+				END IF;	
+  			    RETURN TransDate; 
+END;
+
+
+CREATE FUNCTION Create_RRN(IN env REFERENCE) RETURNS CHARACTER
+	BEGIN
+		DECLARE J INTEGER 0;
+		--DECLARE K INTEGER 0;
+		DECLARE RRN CHARACTER;
+		SET env.seq[]=PASSTHRU('select s1.nextval from SYSIBM.DUAL');
+		SET J=env.seq.*[1];
+--		IF J=999999999 THEN
+--			SET K=K+1;
+--		    SET RRN=CAST(K AS CHARACTER)||REPLICATE('0',(9-LENGTH(CAST(J AS CHARACTER))))||CAST(J AS CHARACTER) ;
+--		ELSE
+			SET RRN='100'||REPLICATE('0',(9-LENGTH(CAST(J AS CHARACTER))))||CAST(J AS CHARACTER) ;    
+		--END IF;
+		
+		RETURN RRN;
+	END;
+	
+--CREATE FUNCTION generateSTAN(STAN CHAR
+--					  ) RETURNS CHAR
+--	BEGIN
+--			-- START Logic for SystemTraceAuditNo manipulation
+--		        
+--				DECLARE currDate CHARACTER;
+--				SET currDate = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmss');
+--				DECLARE currDate_Month CHARACTER SUBSTRING(currDate FROM 3 FOR 2);
+--				DECLARE currDate_Date CHARACTER SUBSTRING(currDate FROM 5 FOR 2);
+--					IF(I<100000) THEN
+--					SET I=I+1;
+--				ELSE
+--					SET I=1;
+--				END IF;
+--			
+--				DECLARE serialNo CHARACTER CAST((I) AS CHARACTER);
+--				SET serialNo = STAN||currDate_Month||currDate_Date||REPLICATE('0', 5-LENGTH(serialNo)) || serialNo;
+--				RETURN serialNo;
+--				-- Ends Logic for SystemTraceAuditNo manipulation
+--	END;	
+--	
+
+CREATE FUNCTION generateSTAN(STAN CHAR) RETURNS CHAR
+	BEGIN
+		DECLARE currDate,MonthChar CHARACTER;
+		SET currDate = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmss');
+		DECLARE currDate_Date CHARACTER SUBSTRING(currDate FROM 5 FOR 2);
+		DECLARE currDate_Month CHARACTER SUBSTRING(currDate FROM 3 FOR 2);
+		
+		IF(currDate_Month = '10') THEN
+			SET MonthChar = 'A';
+		ELSEIF(currDate_Month = '11') THEN
+			SET MonthChar = 'B';
+		ELSEIF(currDate_Month = '12') THEN
+			SET MonthChar = 'C';
+		ELSE
+			SET MonthChar = SUBSTRING(currDate_Month FROM 2 FOR 1);
+		END IF;
+		
+		IF(stan<=999999) THEN
+			SET stan=stan+1;
+		ELSE
+			SET stan=1;
+		END IF;
+		
+		DECLARE serialNo CHARACTER CAST((stan) AS CHARACTER);
+		SET serialNo = STAN||MonthChar||currDate_Date||REPLICATE('0', 6-LENGTH(serialNo)) || serialNo;
+		RETURN serialNo;
+	END;
+
+
+
+
+CREATE FUNCTION TIMECHECK(IN env REFERENCE) RETURNS CHARACTER
+	BEGIN
+		DECLARE Time_Stamp CHARACTER;
+		DECLARE Curr_Time CHARACTER ;
+		SET Curr_Time = SUBSTRING(CAST(CURRENT_TIME AS CHARACTER) FROM 7 FOR 12);
+		SET env.Variables.Time_Stamp[]= (SELECT  S.TIME, S.FLAG FROM Database.EAI.EAI_TIMECHECK AS S WHERE S.SOURCE='ECS'AND S.TARGET='FIN' AND S.PROCESSID='01'); 
+		SET Time_Stamp=env.Variables.Time_Stamp.[1];
+		--SET Curr_Time= CAST(CURRENT_TIME AS TIME);
+		IF(Curr_Time >Time_Stamp AND env.Variables.Time_Stamp.[2]='Y') THEN
+			RETURN 'Y';
+			
+				
+		ELSE
+			RETURN 'N';
+	    END IF;	
+	END;	
+	
+	CREATE FUNCTION CreateRRN(IN env REFERENCE,seqNumber INTEGER, seqId CHARACTER) RETURNS CHARACTER
+	BEGIN
+		DECLARE J INTEGER 0;
+		--DECLARE K INTEGER 0;
+		DECLARE RRN CHARACTER;
+		SET env.seq[]=PASSTHRU('select '||seqId||'.nextval from DUAL');
+		SET J=env.seq.*[1];
+--		IF J=999999999 THEN
+--			SET K=K+1;
+--		    SET RRN=CAST(K AS CHARACTER)||REPLICATE('0',(9-LENGTH(CAST(J AS CHARACTER))))||CAST(J AS CHARACTER) ;
+--		ELSE
+			SET RRN=CAST(seqNumber AS CHARACTER)||REPLICATE('0',(9-LENGTH(CAST(J AS CHARACTER))))||CAST(J AS CHARACTER);    
+		--END IF;
+		
+		RETURN RRN;
+	END;
+	CREATE FUNCTION CreateCorelID(IN env REFERENCE,seqNumber INTEGER, CorelseqId CHARACTER) RETURNS CHARACTER
+	BEGIN
+		DECLARE J INTEGER 0;
+		--DECLARE K INTEGER 0;
+		DECLARE CorelID CHARACTER;
+		SET env.seq[]=PASSTHRU('select '||'EAI.'||CorelseqId||'.nextval from DUAL');
+		SET J=env.seq.*[1];
+--		IF J=999999999 THEN
+--			SET K=K+1;
+--		    SET RRN=CAST(K AS CHARACTER)||REPLICATE('0',(9-LENGTH(CAST(J AS CHARACTER))))||CAST(J AS CHARACTER) ;
+--		ELSE
+			SET CorelID=CAST(seqNumber AS CHARACTER)||REPLICATE('0',(9-LENGTH(CAST(J AS CHARACTER))))||CAST(J AS CHARACTER);    
+		--END IF;
+		
+		RETURN CorelID;
+	END;
+	
+CREATE FUNCTION GEN_COMMON_XML( IN OutputRef REFERENCE,IN Payload REFERENCE,SolID CHARACTER ,actionCode CHARACTER,transAmount CHARACTER,RRN  CHARACTER ,IN env REFERENCE) RETURNS CHAR	
+BEGIN
+	SET env.ResponseRemark[]=Select D.RESPONSE_REMARK from  Database.EAI.EAI_RESPONSE_MASTER AS D WHERE D.RESPONSECODE=actionCode AND D.SOURCE_TYPE='FIN' ;
+	--DECLARE TransactionAmount CHARACTER Payload.ECSMessage.Amount;
+			/*Commented By Arvind Due To Wrong Entry To EAI_RESPONSE Table For Amount Value Date 11-08-2011*/
+			--SET TransactionAmount = TRIM(REPLACE(TransactionAmount, '.', ''));
+			--SET TransactionAmount = REPLICATE('0', 18-LENGTH(TransactionAmount))||TransactionAmount;
+			
+	DECLARE OUTDATA REFERENCE TO OutputRef;
+	SET OUTDATA.ACCONTnO=Payload.ECSMessage.AccountNo;
+	SET OUTDATA.RESPONSECODE=actionCode;
+	SET OUTDATA.RESPONSECODEDESC=env.ResponseRemark.RESPONSE_REMARK;
+	SET OUTDATA.STANNO=Payload.ECSMessage.SystemTraceAuditNo;
+	SET OUTDATA.RETREFNO=RRN;
+	-----ADDED BY ROHAN FOR FILENAME TO DISPLAY IN BAM ON 24/08/2011
+	--SET OUTDATA.REMARKS=Payload.ECSMessage.particular2||'|'||Payload.header.FileName; //revert back by rohan on 25/08/2011
+	 -----ADDED BY ROHAN FOR FILENAME TO DISPLAY IN BAM ON 24/08/2011
+	SET OUTDATA.REMARKS=Payload.ECSMessage.particular2;
+	SET OUTDATA.SOURCECODE=Payload.header.SourceCode;
+	SET OUTDATA.TARGETCODE=Payload.header.TargetCode;
+	SET OUTDATA.PROCESSID=Payload.header.ProcessID;
+	SET OUTDATA.TIMESTAMP=CURRENT_TIMESTAMP;
+	SET OUTDATA.POOLACCOUNT=Payload.header.PoolAccount;
+	SET OUTDATA.AMOUNT=transAmount;
+	SET OUTDATA.SOL_ID=SolID;
+	--IF (LENGTH(Payload.header.Cycle)=0 and LENGTH(Payload.header.MsgNo)=0) THEN
+	IF (actionCode='000') THEN
+		SET OUTDATA.RRN_STATUS='O';
+	ELSEIF (actionCode='917' OR actionCode='911' OR actionCode='114') THEN
+		SET OUTDATA.RRN_STATUS='P';
+	ELSE
+		SET OUTDATA.RRN_STATUS='B'; 
+	END IF;
+	--			IF LENGTH(Payload.header.Cycle)<>0 THEN
+	--		 			SET OUTDATA.RRN_STATUS='M';		
+	--		 	END IF;			 	
+	--		 
+	SET OUTDATA.TX_TYPE=Payload.ECSMessage.TransactionType;
+	SET OUTDATA.DATE=Payload.ECSMessage.TransactionDate;
+	SET OUTDATA.PARTICULAR1=Payload.ECSMessage.particular1;
+	SET OUTDATA.RECORDNUMBER=Payload.header.RecordNumber;
+	SET OUTDATA.BRANCHCODE=Payload.header.BranchCode;
+	SET OUTDATA.FILENAME=Payload.header.FileName;
+	SET OUTDATA.MAKERID=Payload.header.Cycle; 
+	SET OUTDATA.CHECKERID=Payload.header.MsgNo; 
+	SET OUTDATA.USERID=Payload.header.UserID; 
+	RETURN OUTDATA;
+END;
+	
+CREATE FUNCTION GENERATE_COMMON_XML(IN OutputRef REFERENCE, actionCode CHARACTER,RRN  CHARACTER, rrn_status CHARACTER,IN env REFERENCE) RETURNS  CHAR
+BEGIN
+ 	--SET env.ResponseRemark[]=Select D.RESPONSE_REMARK from  Database.EAI.EAI_RESPONSE_MASTER AS D WHERE D.RESPONSECODE=actionCode AND D.SOURCE_TYPE='FIN' ;
+	--DECLARE TransactionAmount CHARACTER Payload.ECSMessage.Amount;
+			/*Commented By Arvind Due To Wrong Entry To EAI_RESPONSE Table For Amount Value Date 11-08-2011*/
+			--SET TransactionAmount = TRIM(REPLACE(TransactionAmount, '.', ''));
+			--SET TransactionAmount = REPLICATE('0', 18-LENGTH(TransactionAmount))||TransactionAmount;
+			
+	DECLARE OUTDATA REFERENCE TO OutputRef;
+	DECLARE envPayload REFERENCE TO env.variable.PAYLOAD;
+	SET OUTDATA.ACCONTnO=envPayload.accountNo;
+	SET OUTDATA.RESPONSECODE=actionCode;
+	--SET OUTDATA.RESPONSECODEDESC=env.ResponseRemark.RESPONSE_REMARK;
+	SET OUTDATA.STANNO=envPayload.SystemTraceAuditNo;
+	SET OUTDATA.RETREFNO=RRN;
+	----ADDED BY ROHAN FOR FILENAME TO DISPLAY IN BAM ON 24/08/2011
+	--SET OUTDATA.REMARKS=Payload.ECSMessage.particular2||'|'||Payload.header.FileName; //revert back by rohan on 25/08/2011
+	-----ADDED BY ROHAN FOR FILENAME TO DISPLAY IN BAM ON 24/08/2011
+	SET OUTDATA.REMARKS = envPayload.remarks;
+	SET OUTDATA.SOURCECODE = envPayload.srccode;
+	SET OUTDATA.TARGETCODE=envPayload.trgcode;
+	SET OUTDATA.PROCESSID='01';
+	SET OUTDATA.TIMESTAMP = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyy-MM-dd');
+	--SET OUTDATA.TIMESTAMP = CURRENT_TIMESTAMP;
+	SET OUTDATA.POOLACCOUNT = envPayload.poolAccountNo;
+	SET OUTDATA.AMOUNT = envPayload.Amount;
+	SET OUTDATA.SOL_ID =  envPayload.solID;
+		 --IF (LENGTH(Payload.header.Cycle)=0 and LENGTH(Payload.header.MsgNo)=0) THEN	 	   
+--				IF (actionCode='000') THEN
+--						 SET OUTDATA.RRN_STATUS='O';
+--				ELSEIF (actionCode='907' OR actionCode='911' OR actionCode='114') THEN
+--				 		
+--				 		 SET OUTDATA.RRN_STATUS='P';
+--				 		   
+--				ELSE 
+--				     	 SET OUTDATA.RRN_STATUS='B'; 
+--				END IF;
+--			IF LENGTH(Payload.header.Cycle)<>0 THEN
+--		 			SET OUTDATA.RRN_STATUS='M';		
+--		 	END IF;			 	
+--		 
+    SET OUTDATA.RRN_STATUS = rrn_status;
+	SET OUTDATA.TX_TYPE = envPayload.TransType;
+	SET OUTDATA.DATE = envPayload.date;
+	SET OUTDATA.PARTICULAR1 = envPayload.PART1;
+	--SET OUTDATA.RECORDNUMBER=Payload.header.RecordNumber;
+    SET OUTDATA.BRANCHCODE=envPayload.solID;
+    --SET OUTDATA.FILENAME = Payload.header.FileName;
+    SET OUTDATA.MAKERID=''; 
+    SET OUTDATA.CHECKERID=''; 
+    SET OUTDATA.USERID=''; 
+	RETURN OUTDATA;
+END;
+	
+	
+	
+	
+CREATE FUNCTION GEN_VALIDATION( srcCode CHARACTER ,trgCode CHARACTER,clrType CHARACTER,transDate CHARACTER,debitAcc CHARACTER,creditAcc CHARACTER,IN env REFERENCE) RETURNS BOOLEAN
+BEGIN
+	DECLARE result BOOLEAN TRUE;
+	DECLARE res CHARACTER 'n';
+	--SET env.variables.DEBIT_ACCT_MAST[] = select * from Database.EAI.DEBIT_ACCOUNT_MASTER AS D WHERE D.MODULE_NAME= srcCode AND D.DEBIT_ACCT_NUM=debitAcc;
+    IF (clrType='C' OR clrType='c') THEN
+    	SET env.variables.DEBIT_ACCT_MAST[] = select * from Database.EAI.DEBIT_ACCOUNT_MASTER AS D WHERE D.MODULE_NAME= srcCode AND D.DEBIT_ACCT_NUM=debitAcc;
+    	IF (CARDINALITY(env.variables.DEBIT_ACCT_MAST.*[])=0) THEN
+    		--SET env.variables.CHECK.debitAcc='F';
+    		SET env.var.remarks[] = Select D.RESPONSE_REMARK from Database.EAI.EAI_RESPONSE_MASTER AS D where D.SOURCE_TYPE='EAI' AND D.RESPONSECODE='532';
+    		SET res = 'y';
+    		SET env.var.errorCode = '532';
+    		SET env.variables.remarks =  env.var.remarks[1].*;
+    		SET result=FALSE;
+    	ELSE
+    		--SET result = TRUE;
+    	END IF;
+    ELSEIF (clrType='D' OR clrType='d') THEN
+    	SET env.variables.CREDIT_ACCT_MAST[] = select * from Database.EAI.CREDIT_ACCOUNT_MASTER AS D WHERE D.SOURCEID= srcCode AND D.ACCOUNT_NUM=creditAcc;
+    	IF (CARDINALITY(env.variables.CREDIT_ACCT_MAST.*[])=0) THEN
+    		--SET env.variables.CHECK.creditAcc='F';
+    		IF(res = 'y') THEN
+	    		SET env.var.remarks1[] = Select D.RESPONSE_REMARK from Database.EAI.EAI_RESPONSE_MASTER AS D where D.SOURCE_TYPE='EAI' AND D.RESPONSECODE='533';
+	    		SET env.var.errorCode = env.var.errorCode||'|'||'533';
+	    		SET env.variables.remarks =  env.variables.remarks||'|'||env.var.remarks1[1].*;
+	    	ELSE
+	    		SET res ='y';
+	    		SET env.var.remarks1[] = Select D.RESPONSE_REMARK from Database.EAI.EAI_RESPONSE_MASTER AS D where D.SOURCE_TYPE='EAI' AND D.RESPONSECODE='533';
+	    		SET env.var.errorCode = '533';
+	    		SET env.variables.remarks = env.var.remarks1[1].*;
+	    	END IF;
+    		SET result=FALSE;
+    	ELSE
+    		--SET result = TRUE;
+    	END IF;
+    ELSE	
+    	--SET env.variables.CHECK.tranType='F';
+    	 SET res ='y';
+         SET env.var.remarks1[] = Select D.RESPONSE_REMARK from Database.EAI.EAI_RESPONSE_MASTER AS D where D.SOURCE_TYPE='EAI' AND D.RESPONSECODE='531';
+    	 SET env.var.errorCode = '531';
+    	 SET env.variables.remarks = env.var.remarks1[1].*;
+    	 SET result=FALSE;
+    END IF;
+    DECLARE currDate DATE CURRENT_DATE;
+    DECLARE transDate_yy CHARACTER SUBSTRING(transDate FROM 1 FOR 4);
+    DECLARE transDate_mm CHARACTER SUBSTRING(transDate FROM 5 FOR 2);
+    DECLARE transDate_dd CHARACTER SUBSTRING(transDate FROM 7 FOR 2);
+    DECLARE TRANS_DATE CHARACTER transDate_yy||'-'||transDate_mm||'-'||transDate_dd;   
+    IF(CAST(TRANS_DATE AS DATE)>currDate) THEN
+	    IF(res ='y') THEN 
+			SET env.var.remarks2[] = Select D.RESPONSE_REMARK from Database.EAI.EAI_RESPONSE_MASTER AS D where D.SOURCE_TYPE='EAI' AND D.RESPONSECODE='205';
+			SET env.var.errorCode =  env.var.errorCode||'|'|| '205';
+			SET env.variables.remarks = env.variables.remarks||'|'||env.var.remarks2[1].*;
+	    ELSE
+		    SET env.var.remarks2[] = Select D.RESPONSE_REMARK from Database.EAI.EAI_RESPONSE_MASTER AS D where D.SOURCE_TYPE='EAI' AND D.RESPONSECODE='205';
+		    SET env.var.errorCode = '205';
+		    SET env.variables.remarks = env.var.remarks2[1].*;
+	    END IF;
+	    SET result=FALSE;
+    ELSE
+    	--SET result = TRUE;
+    END IF;
+    IF(trgCode <> 'FIN') THEN
+	    IF(res ='y') THEN 
+		    SET env.var.remarks3[] = Select D.RESPONSE_REMARK from Database.EAI.EAI_RESPONSE_MASTER AS D where D.SOURCE_TYPE='FIN' AND D.RESPONSECODE='534';
+		    SET env.var.errorCode =  env.var.errorCode||'|'|| '534';
+		    SET env.variables.remarks = TRIM(env.variables.remarks)||'|'||env.var.remarks3[1].*;
+	    ELSE
+		    SET env.var.remarks3[] = Select D.RESPONSE_REMARK from Database.EAI.EAI_RESPONSE_MASTER AS D where D.SOURCE_TYPE='FIN' AND D.RESPONSECODE='534';
+		    SET env.var.errorCode = '534';
+		    SET env.variables.remarks = env.var.remarks3[1].*;
+	    END IF;
+	    SET result=FALSE;
+    ELSE
+    	--SET result = TRUE;
+    END IF;
+  	RETURN result;
+END;
+
+--CREATE FUNCTION modifyField102_InvalidAccnt( in_accountNo 	CHAR
+--					  ) RETURNS CHAR
+--BEGIN
+--
+--  	DECLARE FIELD_102_PREFIX CHAR '026        ';--026 followed by 8 spaces
+--	DECLARE branchCode CHAR SUBSTRING(in_accountNo FROM 1 FOR 5);
+--	DECLARE FIELD_102_BRANCHCODE_SEPARATOR CHAR '   '; -- 3 SPACES
+--	DECLARE FIELD_102_SUFFIX CHAR '    '; -- 4 SPACES
+--	
+--	DECLARE return_value CHARACTER FIELD_102_PREFIX||branchCode||FIELD_102_BRANCHCODE_SEPARATOR||in_accountNo||FIELD_102_SUFFIX;
+--  	RETURN return_value;
+--END;
+
+CREATE FUNCTION modifyField103( in_accountNo CHAR,IN env REFERENCE
+					  ) RETURNS CHAR
+BEGIN
+		SET env.DebitAccNum.SOLEID[] = PASSTHRU('Select D.SOL_ID from ACCOUNT_VIEW D where D.FORACID =?',in_accountNo);
+		DECLARE solID CHARACTER env.DebitAccNum.SOLEID[1].*;
+	  	DECLARE FIELD_103_PREFIX CHAR '  026        ';--026 followed by 8 spaces
+		DECLARE SoleID CHAR solID;
+		DECLARE FIELD_103_BRANCHCODE_SEPARATOR CHAR '   '; -- 3 SPACES
+		DECLARE FIELD_103_SUFFIX CHAR '    '; -- 4 SPACES
+	
+	DECLARE return_value CHARACTER FIELD_103_PREFIX||SoleID||FIELD_103_BRANCHCODE_SEPARATOR||in_accountNo||FIELD_103_SUFFIX;
+  	RETURN return_value;
+END;
+
+
+CREATE FUNCTION RemoveSpecialCharacters( IN String CHARACTER) RETURNS CHAR
+BEGIN
+		SET String = REPLACE(String,'`',' ');
+		SET String = REPLACE(String,'~',' ');
+		SET String = REPLACE(String,'!',' ');
+		SET String = REPLACE(String,'\',' ');
+		SET String = REPLACE(String,'_',' ');
+		SET String = REPLACE(String,'|',' ');
+		SET String = REPLACE(String,'"',' ');
+		SET String = REPLACE(String,';',' ');
+		SET String = REPLACE(String,'$',' ');
+		SET String = REPLACE(String,'@',' ');
+		SET String = REPLACE(String,'#',' ');
+		SET String = REPLACE(String,'%',' ');
+		SET String = REPLACE(String,'^',' ');
+		SET String = REPLACE(String,'&',' ');
+		SET String = REPLACE(String,'[',' ');
+		SET String = REPLACE(String,']',' ');
+		SET String = REPLACE(String,'{',' ');
+		SET String = REPLACE(String,'}',' ');
+		SET String = REPLACE(String,'>',' ');
+		SET String = REPLACE(String,'<',' ');
+		SET String = REPLACE(String,']',' ');
+		SET String = REPLACE(String,'  ',' ');
+	RETURN String;
+END;
